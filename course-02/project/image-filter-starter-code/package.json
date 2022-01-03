@@ -28,6 +28,9 @@
     "tslint": "^5.18.0",
     "typescript": "^3.5.3"
   },
+  "engines": {
+    "node": "~10.24.0" 
+  },
   "dependencies": {
     "express": "^4.17.1",
     "jimp": "^0.16.1",
