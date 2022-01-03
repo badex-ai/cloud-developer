@@ -49,7 +49,7 @@ import { Url } from 'url';
     }
     catch {
       (err: Error) => {
-        res.status(422)
+        res.status(422).send("something went wrong")
       }
     }
 
