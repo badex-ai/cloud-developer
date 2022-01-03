@@ -1,6 +1,7 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import { filterImageFromURL, deleteLocalFiles } from './util/util';
+import { Url } from 'url';
 
 (async () => {
 
@@ -31,21 +32,26 @@ import { filterImageFromURL, deleteLocalFiles } from './util/util';
 
   //! END @TODO1
 
-  app.get("/filteredimage", async (req, res) => {
+  app.get("/filteredimage", async (req: Request, res: Response): Promise<any> => {
+    try {
+      let imgUrl: string = req.query.image_url;
 
-    let imgUrl = req.query.image_url;
 
+      if (!imgUrl) {
+        return res.send("missing parameters")
+      }
 
-    if (!imgUrl) {
-      return res.send("missing parameters")
+      let result: string = await filterImageFromURL(imgUrl);
+      // 
+      console.log(result)
+      res.status(200).sendFile(result, () => deleteLocalFiles([result]))
+
     }
-
-    let result = await filterImageFromURL(imgUrl);
-    // 
-
-    res.send(result);
-
-    deleteLocalFiles([result])
+    catch {
+      (err: Error) => {
+        res.status(422)
+      }
+    }
 
 
 
@@ -53,7 +59,7 @@ import { filterImageFromURL, deleteLocalFiles } from './util/util';
 
   // Root Endpoint
   // Displays a simple message to the user
-  app.get("/", async (req, res) => {
+  app.get("/", async (req: Request, res: Response) => {
     res.send("try GET /filteredimage?image_url={{}}")
   });
 
