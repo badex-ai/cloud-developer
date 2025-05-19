@@ -13,6 +13,7 @@ import { createLogger } from '../utils/logger'
 
 const attachmentUtils = new AttachmentUtils()
 const logger = createLogger('todos')
+const todosAccess = new TodosAccess()
 
 const createTodo = async (
     createTodoRequest: CreateTodoRequest,
@@ -33,12 +34,13 @@ const createTodo = async (
         ...createTodoRequest
     }
 
-    return await TodosAccess.createTodo(newTodo)
+    return await todosAccess.createTodo(newTodo)
 }
 
 const getTodos = async (userId: string): Promise<TodoItem[]> => {
     logger.info(`Getting all todos for user ${userId}`)
-    return TodosAccess.getAllTodos(userId)
+    const items = await todosAccess.getAllTodos(userId)
+    return items
 }
 
 const updateTodo = async (
@@ -62,7 +64,7 @@ const updateTodo = async (
         todoId,
         {
             ...updateTodoRequest,
-            updatedAt
+            // updatedAt
         }
     )
 }
@@ -71,13 +73,13 @@ const deleteTodo = async (userId: string, todoId: string) => {
     logger.info(`Deleting todo ${todoId} for user ${userId}`)
 
     // Check if todo exists
-    const todo = await TodosAccess.getTodo(userId, todoId)
+    const todo = await todosAccess.getTodo(userId, todoId)
 
     if (!todo) {
         throw new createError.NotFound(`Todo with ID ${todoId} not found`)
     }
 
-    await TodosAccess.deleteTodo(userId, todoId)
+    await todosAccess.deleteTodo(userId, todoId)
 }
 
 const createAttachmentPresignedUrl = async (userId: string, todoId: string): Promise<string> => {
