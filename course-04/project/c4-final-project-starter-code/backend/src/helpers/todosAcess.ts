@@ -62,7 +62,7 @@ export class TodosAccess {
                 ':name': todoUpdate.name,
                 ':dueDate': todoUpdate.dueDate,
                 ':done': todoUpdate.done,
-                ':updatedAt': todoUpdate.updatedAt
+                // ':updatedAt': todoUpdate.updatedAt
             }
         }).promise()
     }
