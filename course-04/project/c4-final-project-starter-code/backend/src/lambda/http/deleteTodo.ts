@@ -7,20 +7,21 @@ import { cors, httpErrorHandler } from 'middy/middlewares'
 import { deleteTodo } from '../../helpers/todos'
 import { getUserId } from '../utils'
 
-export const handler = middy(
-  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    const todoId = event.pathParameters.todoId
-    // TODO: Remove a TODO item by id
-    await deleteTodo(todoId)
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  const todoId = event.pathParameters.todoId
+  const userId = getUserId(event)
+  // TODO: Remove a TODO item by id
+  await deleteTodo(userId, todoId)
 
-    return undefined
+  return {
+    statusCode: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': true
+    },
+    body: ''
   }
-)
+}
 
-handler
-  .use(httpErrorHandler())
-  .use(
-    cors({
-      credentials: true
-    })
-  )
+
+
