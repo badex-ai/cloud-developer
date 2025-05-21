@@ -57,11 +57,11 @@ functions:
           path: todos
           cors: true
           authorizer: Auth
-  iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:Query
-        Resource: !GetAtt TodosTable.Arn
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+          Resource: !GetAtt TodosTable.Arn
 
   # TODO: Configure this function - 
   # Provide iamRoleStatements property. Decide the Actions and AWS Resource. 
