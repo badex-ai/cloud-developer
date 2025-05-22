@@ -1,10 +1,10 @@
 # TODO: Change the name of the org 
-org: nithub
+org: gunithub
 app: serverless-todo-app
 service: serverless-todo-app
 
 plugins:
-  - serverless-webpack
+  # - serverless-webpack
   - serverless-iam-roles-per-function
   - serverless-plugin-tracing
 
@@ -20,8 +20,7 @@ provider:
     lambda: true
     apiGateway: true
 
-  # Use these variables in the functions and resouorces section below. For example, 
-  # ${self:provider.environment.ATTACHMENT_S3_BUCKET}
+  # Use these variables in the functions and resources section below
   environment:
     TODOS_TABLE: Todos-${self:provider.stage}
     TODOS_CREATED_AT_INDEX: CreatedAtIndex
@@ -42,15 +41,58 @@ provider:
           Resource: "*"
 
 
+package:
+  patterns:
+    # Exclude development files
+    - '!node_modules/**'
+    - '!.git/**'
+    - '!.vscode/**'
+    - '!.idea/**'
+    - '!*.md'
+    - '!.env*'
+    - '!.gitignore'
+    - '!.npmrc'
+    
+    # Exclude test and build files
+    - '!jest.config.js'
+    - '!*.test.js'
+    - '!*.test.ts'
+    - '!test/**'
+    - '!tests/**'
+    - '!coverage/**'
+    - '!.nyc_output/**'
+    - '!docs/**'
+    - '!README*'
+    
+    # Exclude Serverless files
+    - '!.serverless/**'
+    - '!serverless.yml'
+    - '!package-lock.json'
+    - '!yarn.lock'
+    
+    # Include only necessary source files
+    - 'src/**'
+    - 'models/**'
+    - 'package.json'
+    
+  individually: true
+  excludeDevDependencies: true
+
+
+
+
+
 functions:
 
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
+    tracing: Active
 
   # TODO: Configure this function - 
   # Provide iamRoleStatements property for performing Actions on DynamoDB
   GetTodos:
     handler: src/lambda/http/getTodos.handler
+    tracing: Active
     events:
       - http:
           method: get
@@ -69,6 +111,7 @@ functions:
   # To validate incoming HTTP requests, we have provided the request schemas in function definition below. 
   CreateTodo:
     handler: src/lambda/http/createTodo.handler
+    tracing: Active
     events:
       - http:
           method: post
@@ -88,10 +131,13 @@ functions:
   # Provide property for setting up CORS, Authorizer, iamRoleStatements, and request schemas
   UpdateTodo:
     handler: src/lambda/http/updateTodo.handler
+    tracing: Active
     events:
       - http:
           method: patch
           path: todos/{todoId}
+          cors: true
+          authorizer: Auth
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -102,10 +148,13 @@ functions:
   # Provide property for setting up CORS, Authorizer, iamRoleStatements
   DeleteTodo:
     handler: src/lambda/http/deleteTodo.handler
+    tracing: Active
     events:
       - http:
           method: delete
           path: todos/{todoId}
+          cors: true
+          authorizer: Auth
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -116,10 +165,13 @@ functions:
   # Provide property for setting up CORS, Authorizer, iamRoleStatements
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
+    tracing: Active
     events:
       - http:
           method: post
           path: todos/{todoId}/attachment
+          cors: true
+          authorizer: Auth
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -147,29 +199,29 @@ resources:
     TodosTable:
       Type: AWS::DynamoDB::Table
       Properties:
-       AttributeDefinitions:
-       - AttributeName: userId
-         AttributeType: S
-       - AttributeName: todoId
-         AttributeType: S
-       - AttributeName: createdAt
-         AttributeType: S
-      KeySchema:
-       - AttributeName: userId
-         KeyType: HASH
-       - AttributeName: todoId
-         KeyType: RANGE
-      BillingMode: PAY_PER_REQUEST
-      TableName: ${self:provider.environment.TODOS_TABLE}
-      LocalSecondaryIndexes:
-       - IndexName: ${self:provider.environment.TODOS_CREATED_AT_INDEX}
-         KeySchema:
-           - AttributeName: userId
-             KeyType: HASH
-           - AttributeName: createdAt
-             KeyType: RANGE
-         Projection:
-           ProjectionType: ALL # What attributes will be copied to an index
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: todoId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: todoId
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.TODOS_TABLE}
+        LocalSecondaryIndexes:
+          - IndexName: ${self:provider.environment.TODOS_CREATED_AT_INDEX}
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL # What attributes will be copied to an index
 
     # TODO: Complete the bucket properties below. 
     # Do not forget to add the CorsConfiguration propoerty
@@ -177,6 +229,11 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:provider.environment.ATTACHMENT_S3_BUCKET}
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
         CorsConfiguration:
           CorsRules:
             - AllowedOrigins:
@@ -197,11 +254,12 @@ resources:
       Type: AWS::S3::BucketPolicy
       Properties:
         Bucket: !Ref AttachmentsBucket
-    PolicyDocument:
-      Statement:
-        - Effect: Allow
-          Principal: '*'
-          Action:
-            - s3:GetObject
-            - s3:PutObject
-          Resource: !Join ['', ['arn:aws:s3:::', !Ref AttachmentsBucket, '/*']]
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal: '*'
+              Action:
+                - s3:GetObject
+                - s3:PutObject
+              Resource: !Join ['', ['arn:aws:s3:::', !Ref AttachmentsBucket, '/*']]

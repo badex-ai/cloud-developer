@@ -37,7 +37,7 @@ const createTodo = async (
     return await todosAccess.createTodo(newTodo)
 }
 
-const getTodos = async (userId: string): Promise<TodoItem[]> => {
+const getTodosForUser = async (userId: string): Promise<TodoItem[]> => {
     logger.info(`Getting all todos for user ${userId}`)
     const items = await todosAccess.getAllTodos(userId)
     return items
@@ -99,4 +99,4 @@ const createAttachmentPresignedUrl = async (userId: string, todoId: string): Pro
 
 
 
-export { createTodo, updateTodo, deleteTodo, getTodos, createAttachmentPresignedUrl }
+export { createTodo, updateTodo, deleteTodo, getTodosForUser, createAttachmentPresignedUrl }
