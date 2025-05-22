@@ -14,3 +14,13 @@ export function getUserId(event: APIGatewayProxyEvent): string {
 
   return parseUserId(jwtToken)
 }
+
+export function promisify(fn: Function) {
+  return (...args: any[]) =>
+    new Promise((resolve, reject) => {
+      fn(...args, (err: any, result: any) => {
+        if (err) return reject(err)
+        resolve(result)
+      })
+    })
+}
