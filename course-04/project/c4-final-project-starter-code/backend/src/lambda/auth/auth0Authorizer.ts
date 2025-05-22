@@ -6,6 +6,8 @@ import { createLogger } from '../../utils/logger'
 import Axios from 'axios'
 import { Jwt } from '../../auth/Jwt'
 import { JwtPayload } from '../../auth/JwtPayload'
+import { promisify } from 'util'
+
 
 const logger = createLogger('auth')
 
@@ -125,9 +127,16 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
 
   try {
     const signingKey = await getSigningKey(jwt)
-    const verifyAsync = promisify(verify)
 
-    const decoded = await verifyAsync(token, signingKey, { algorithms: ['RS256'] }) as JwtPayload
+    const decoded = await new Promise<JwtPayload>((resolve, reject) => {
+      verify(token, signingKey, { algorithms: ['RS256'] }, (err, payload) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(payload as JwtPayload)
+        }
+      })
+    })
 
     logger.info('Token verified successfully')
     return decoded
