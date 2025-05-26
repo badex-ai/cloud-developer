@@ -57,14 +57,14 @@ const updateTodo = async (
         throw new createError.NotFound(`Todo with ID ${todoId} not found`)
     }
 
-    const updatedAt = new Date().toISOString()
+
 
     await todosAccess.updateTodo(
         userId,
         todoId,
         {
-            ...updateTodoRequest,
-            // updatedAt
+            ...updateTodoRequest
+
         }
     )
 }
