@@ -31,16 +31,23 @@ export class TodosAccess {
             }
         }).promise()
 
+        if (!result.Items) {
+            logger.warn(`No todos found for user ${userId}`)
+            return []
+        }
+
         return result.Items as TodoItem[]
     }
 
     async createTodo(todoItem: TodoItem): Promise<TodoItem> {
         logger.info(`Creating a new todo item: ${JSON.stringify(todoItem)}`)
 
-        await this.docClient.put({
+        let result = await this.docClient.put({
             TableName: this.todosTable,
             Item: todoItem
         }).promise()
+
+        logger.info(`Put result: ${JSON.stringify(result)}`)
 
         return todoItem
     }
@@ -48,14 +55,13 @@ export class TodosAccess {
     async updateTodo(userId: string, todoId: string, todoUpdate: TodoUpdate): Promise<void> {
         logger.info(`Updating todo ${todoId} for user ${userId} with ${JSON.stringify(todoUpdate)}`)
 
-        await this.docClient.update({
+        let updatedTodo = await this.docClient.update({
             TableName: this.todosTable,
             Key: {
                 userId,
                 todoId
             },
-            UpdateExpression: 'set #name = :name, dueDate = :dueDate, done = :done, updatedAt = :updatedAt',
-            ExpressionAttributeNames: {
+            UpdateExpression: 'set #name = :name, dueDate = :dueDate, done = :done', ExpressionAttributeNames: {
                 '#name': 'name'  // 'name' is a reserved word in DynamoDB
             },
             ExpressionAttributeValues: {
@@ -65,6 +71,11 @@ export class TodosAccess {
                 // ':updatedAt': todoUpdate.updatedAt
             }
         }).promise()
+        if (!updatedTodo.Attributes) {
+            logger.warn(`No todo found with ID ${todoId} for user ${userId}`)
+            return
+        }
+
     }
 
     async deleteTodo(userId: string, todoId: string): Promise<void> {
