@@ -49,6 +49,7 @@ export default class Auth {
   }
 
   getIdToken() {
+    console.log(this.idToken,'this is the id token')
     return this.idToken;
   }
 
